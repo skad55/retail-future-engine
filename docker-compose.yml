@@ -1,0 +1,23 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: rfe
+      POSTGRES_USER: rfe
+      POSTGRES_PASSWORD: rfe
+    ports:
+      - "5432:5432"
+    volumes:
+      - rfe_pg:/var/lib/postgresql/data
+
+  backend:
+    build: ./backend
+    environment:
+      DATABASE_URL: postgresql+psycopg://rfe:rfe@db:5432/rfe
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+
+volumes:
+  rfe_pg:
