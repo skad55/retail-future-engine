@@ -1,18 +1,35 @@
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from .config import settings
 from .db import Base, engine
-from .routes.auth import router as auth_router
-from .routes.stores import router as stores_router
-from .routes.ingest import router as ingest_router
+from .routes import auth, stores, ingest
 
-app = FastAPI(title="Retail Future Engine")
 
-@app.on_event("startup")
-def on_startup():
-    Base.metadata.create_all(bind=engine)
+app = FastAPI()
 
-app.include_router(auth_router)
-app.include_router(stores_router)
-app.include_router(ingest_router)
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=settings.cors_origins_list(),
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+# Routers
+app.include_router(auth.router, prefix=settings.API_PREFIX)
+app.include_router(stores.router, prefix=settings.API_PREFIX)
+app.include_router(ingest.router, prefix=settings.API_PREFIX)
+
+# DB init (dev-friendly)
+Base.metadata.create_all(bind=engine)
+
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
 
 @app.get("/")
 def root():
